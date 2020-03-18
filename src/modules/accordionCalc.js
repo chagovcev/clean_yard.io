@@ -4,11 +4,10 @@ const accordionCalc = () => {
     panelCollapse = accordionOne.querySelectorAll('.panel-collapse'),
     popupDiscount = document.querySelector('.popup-discount'),
     nextStep = accordionOne.querySelectorAll('.construct-btn'),
-    getPrice = accordionOne.querySelector('button'),
     myonoffswitch = document.getElementById('myonoffswitch'),
     secondWell = document.getElementById('second-well'),
     btnOrder = document.querySelector('.btn-order'),
-    captureForm = document.querySelectorAll('.capture-form'); 
+    captureForm = document.querySelectorAll('.capture-form');  
 
     // Открытие по клику на заголовки
 
@@ -20,34 +19,53 @@ const accordionCalc = () => {
             panelCollapse.forEach((section) => {
                 if(target.contains(section)){                  
                     section.classList.toggle('in');
-                }                
+                } else {
+                    section.classList.remove('in');
+                }                 
             }); 
         });    
     });   
     
-    // Переход по кнопке следующий шаг 
+    // Переход по кнопке следующий шаг, а получить расчет - открывается модалка
 
     nextStep.forEach((e) => {
         if(e.tagName !== 'BUTTON'){
             e.addEventListener('click', (event) => {
                 event.preventDefault();
                 let target = event.target.closest('.panel-default');
-                console.log('target: ', target);
                 let panel = target.nextElementSibling.childNodes[3];
-                panel.classList.add('in');                
+                
+                panel.classList.toggle('in');       
+                target.childNodes[3].classList.toggle('in');      
             });
-        }        
+        } else {
+            e.addEventListener('click', () => {
+                popupDiscount.style.display = 'block';
+                if(myonoffswitch.checked){
+                    calcCostOne();
+                } else {
+                    calcCostOne();
+                    calcCostTwo();
+                } 
+            });
+        }
      });   
 
     //Переключатель switch одно-двухкамерный
+
+    const customerData = {};
         
-    secondWell.style.display = 'none';  
+    secondWell.style.display = 'none';
+    customerData['Тип септика'] = 'Однокамерный'; 
 
     myonoffswitch.addEventListener('change', () => {
         if(myonoffswitch.checked){
             secondWell.style.display = 'none';
+            calcCostOne();            
         } else {
-            secondWell.style.display = 'block';   
+            secondWell.style.display = 'block';
+            customerData['Тип септика'] = 'Двухкамерный'; 
+            calcCostTwo();  
         }
      });
             
@@ -60,19 +78,39 @@ const accordionCalc = () => {
         calcResult = document.getElementById('calc-result'),
         priceOneTotal = {},
         priceTwoTotal = {},
-        customerData = {};
-    
-    let priceOne = 10000,            
-        priceTwo = 5000;
+        select = accordionOne.querySelectorAll('select');
+
+        select.forEach((e) => {
+            e.addEventListener('change', () => {
+                if(myonoffswitch.checked){
+                    calcCostOne();
+                } else {
+                    calcCostOne();
+                    calcCostTwo();
+                }            
+            });
+        });
     
         bottom.checked = false; 
+
+        bottom.addEventListener(('change'), () => {
+            if(myonoffswitch.checked){
+                calcCostOne();
+            } else {
+                calcCostOne();
+                calcCostTwo();
+            }
+        });
+
+        let priceOne = 10000,            
+        priceTwo = 5000;
         
         distance.addEventListener('input', () => {
             distance.value = distance.value.replace(/[^\d,]/g, '');
         });
 
     //калькулятор первого блока
-        
+   
     const calcCostOne = () => {
         
             if(diameter[0].value === '1.4 метра'){ 
@@ -118,7 +156,10 @@ const accordionCalc = () => {
             if(distance.value){
                 customerData['Дистанция '] = distance.value;
             }
-        };     
+            calcResult.value = priceOneTotal['Цена'];
+        };  
+
+        calcCostOne();   
         
     //калькулятор второго блока(если выбран двух камерный)
 
@@ -165,48 +206,57 @@ const accordionCalc = () => {
             }       
             if(distance.value){
                 customerData['Дистанция '] = distance.value;
-            }    
-    };
-
-    //Если выбран однокамерный - добавляет блок и удаляет все из объекта customerData
-    //если выбран двух камерный - запускает обе функции и данные помещает в объект customerData
-    
-    getPrice.addEventListener(('click'), () => {
-
-        popupDiscount.style.display = 'block';
-
-        if(myonoffswitch.checked){
-            delete customerData['Диаметр 2 (м)'];
-            delete customerData['Кол.колец 2'];
+            }  
+            priceTwoTotal['Итоговая цена'] = priceTwoTotal['Цена 2'] + priceOneTotal['Цена'];
             delete customerData['Цена 2'];
-            calcCostOne();
-            calcResult.value = priceOneTotal['Цена'];            
-            console.log(customerData);          
-        } else {
-            calcCostOne();
-            calcCostTwo();
-            calcResult.value = customerData['Цена 2'] + customerData['Цена']; 
-                       
-            console.log(customerData);
-        }         
-    });  
+            delete customerData['Цена'];
+            calcResult.value = priceTwoTotal['Итоговая цена'];  
+    };
+    
+    // Оповещение о статусе формы
+
+    const successMessage = 'Спасибо, мы с вами свяжемся!',
+        errorMessage = 'Что-то пошло не так',
+        loadMessage = 'Загрузка...',
+        statusMessage = document.createElement('div');
+        statusMessage.style.cssText = `font-size: 2.3rem; color: #F28C07`;
 
     // Объединение двух объектов (данные калькулятора и данные заказчика) в один
 
     const body = {};
     
     btnOrder.addEventListener(('click'), () => {
+        captureForm[2].appendChild(statusMessage);
+        statusMessage.textContent = loadMessage;
+
         const formData = new FormData(captureForm[2]);
         formData.forEach((val, key) => {
             body[key] = val;
         });
         const customerDataNew = Object.assign(customerData, body);
-        postData(customerDataNew);
-    }); 
 
+        postData(customerDataNew, () => {
+            statusMessage.textContent = successMessage;
+                setTimeout(() => {
+                    statusMessage.textContent = '';
+                }, 2000);
+            }, (error) => {
+                console.error('Номер ошибки: ' + error);
+                statusMessage.textContent = errorMessage;
+                setTimeout(() => {
+                    statusMessage.textContent = '';
+                }, 2000);
+        });    
+        
+        //После отправки удаляет из объекта все свойства
+
+        for(let key in customerDataNew){delete customerDataNew[key];}  
+    });    
+    
+    
     // Отправка данных на сервер
 
-    const postData = (customerDataNew) => {
+    const postData = (customerDataNew, succses, error) => {
         const request = new XMLHttpRequest();
 
         request.addEventListener('readystatechange', () => {
@@ -215,9 +265,9 @@ const accordionCalc = () => {
                 return;
             }
             if (request.status === 200) {
-                console.log('success');
+                succses();
             } else {
-                console.error(request.status);
+                error(request.status);
             }
         });
 

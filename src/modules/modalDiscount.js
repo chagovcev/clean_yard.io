@@ -2,7 +2,8 @@ const modalDiscount = () => {
  
      const discountBtn = document.querySelectorAll('.discount-btn'),
      popupDiscount = document.querySelector('.popup-discount'),
-     popup = document.querySelectorAll('.popup');
+     popup = document.querySelectorAll('.popup'),
+     allInputs = document.querySelectorAll('input');
     
      for(let i = 0; i < discountBtn.length; i++){
         discountBtn[i].addEventListener('click', () => {
@@ -15,6 +16,11 @@ const modalDiscount = () => {
 
         if(target.classList.contains('popup-close') || 
             target.classList.contains('popup')){
+                allInputs.forEach((e) => {            
+                    if(!e.closest('#accordion') && !e.closest('#calc-result')){
+                        e.value = '';
+                    }
+                });
             popupDiscount.style.display = 'none';
         } 
         

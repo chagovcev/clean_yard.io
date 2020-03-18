@@ -3,7 +3,8 @@ const modalConsult = () => {
         popupConsult = document.querySelector('.popup-consultation'),
         popup = document.querySelectorAll('.popup'),
         captureForm = document.querySelectorAll('.capture-form'),
-        directorForm = document.querySelector('.director-form');
+        directorForm = document.querySelector('.director-form'),
+        allInputs = document.querySelectorAll('input');
 
 
     popup[3].addEventListener('click', (event) => {
@@ -11,35 +12,61 @@ const modalConsult = () => {
 
         if(target.classList.contains('popup-close') || 
             target.classList.contains('popup')){
+                allInputs.forEach((e) => {            
+                    if(!e.closest('#accordion') && !e.closest('#calc-result')){
+                        e.value = '';
+                    }
+                });
             popupConsult.style.display = 'none';
         }         
     });
 
     // Объединение двух объектов (данные калькулятора и данные заказчика) в один
-
+    
     const question = {},
-        customerData = {};
+        customerData = {},
+        statusMessage = document.createElement('div');
+        statusMessage.style.cssText = `font-size: 2.3rem; color: #F28C07`;
+
+    const successMessage = 'Спасибо, мы с вами свяжемся!',
+        errorMessage = 'Что-то пошло не так',
+        loadMessage = 'Загрузка...';
 
     
     consultBtn.addEventListener(('click'), () => {
         popupConsult.style.display = 'block';
-        captureForm[4].addEventListener(('submit'), () => {
-          const formData1 = new FormData(directorForm);
-            formData1.forEach((val, key) => {
-                question[key] = val;
-            });
-            const formData2 = new FormData(captureForm[4]);
-            formData2.forEach((val, key) => {
-                customerData[key] = val;
-            });
-            const requestCust = Object.assign(question, customerData);
-            postData(requestCust);
-        });
     }); 
+    captureForm[4].addEventListener(('submit'), () => {
+        captureForm[4].appendChild(statusMessage);
+        statusMessage.textContent = loadMessage;
+        const clearMessage = () => {
+            setTimeout(() => {
+                statusMessage.textContent = '';
+            }, 2000);
+        };
+
+        const formData1 = new FormData(directorForm);
+          formData1.forEach((val, key) => {
+              question[key] = val;
+          });
+          const formData2 = new FormData(captureForm[4]);
+          formData2.forEach((val, key) => {
+              customerData[key] = val;
+          });
+          const requestCust = Object.assign(question, customerData);
+          postData(requestCust, () => {            
+            statusMessage.textContent =  successMessage;
+            clearMessage();
+          }, (error) => {
+              console.error(error);
+              statusMessage.textContent = errorMessage;
+              clearMessage();
+          });
+      });
 
     // Отправка данных на сервер
 
-    const postData = (requestCust) => {
+    const postData = (requestCust, success, error) => {
         const request = new XMLHttpRequest();
 
         request.addEventListener('readystatechange', () => {
@@ -48,9 +75,9 @@ const modalConsult = () => {
                 return;
             }
             if (request.status === 200) {
-                console.log('success');
+                success();
             } else {
-                console.error(request.status);
+                error(request.status);
             }
         });
 

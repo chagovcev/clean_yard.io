@@ -21,8 +21,8 @@ const sendForms = () => {
     
     const form = document.querySelectorAll('form');
 
-    const statusMesage = document.createElement('div');
-    statusMesage.style.cssText = `font-size: 2.3rem; color: #F28C07`;
+    const statusMessage = document.createElement('div');
+        statusMessage.style.cssText = `font-size: 2.3rem; color: #F28C07`;
     
     for(let i = 0; i < form.length; i++){
         form[i].addEventListener('submit', (event) => {            
@@ -33,8 +33,8 @@ const sendForms = () => {
                form[i].closest('.popup-consultation')){
                 return;
             }
-            form[i].appendChild(statusMesage);
-            statusMesage.textContent = loadMessage;
+            form[i].appendChild(statusMessage);
+            statusMessage.textContent = loadMessage;
     
             const formData = new FormData(form[i]);
             let body = {};
@@ -45,10 +45,16 @@ const sendForms = () => {
             
     
             postData(body, () => {
-                statusMesage.textContent = successMessage;
+                statusMessage.textContent = successMessage;
+                setTimeout(() => {
+                    statusMessage.textContent = '';
+                }, 2000);
             }, (error) => {
                 console.error('Номер ошибки: ' + error);
-                statusMesage.textContent = errorMessage;
+                statusMessage.textContent = errorMessage;
+                setTimeout(() => {
+                    statusMessage.textContent = '';
+                }, 2000);
             });             
         });
     }
