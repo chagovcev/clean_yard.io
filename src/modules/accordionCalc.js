@@ -224,8 +224,20 @@ const accordionCalc = () => {
     // Объединение двух объектов (данные калькулятора и данные заказчика) в один
 
     const body = {};
-    
-    btnOrder.addEventListener(('click'), () => {
+    const inp = captureForm[2].querySelectorAll('input');
+    btnOrder.disabled = true;
+    inp.forEach((e) => {
+        e.addEventListener('input', () => {
+            if (inp[0].value === '' || inp[1].value === ''){
+                btnOrder.disabled = true;
+            }  else {
+                btnOrder.disabled = false;
+            }
+        });
+        
+    });
+    btnOrder.addEventListener('click', () => {        
+        
         captureForm[2].appendChild(statusMessage);
         statusMessage.textContent = loadMessage;
 
@@ -250,7 +262,8 @@ const accordionCalc = () => {
         
         //После отправки удаляет из объекта все свойства
 
-        for(let key in customerDataNew){delete customerDataNew[key];}  
+        for(let key in customerDataNew){delete customerDataNew[key];} 
+        btnOrder.disabled = true; 
     });    
     
     

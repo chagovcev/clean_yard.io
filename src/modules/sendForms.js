@@ -19,14 +19,15 @@ const sendForms = () => {
         errorMessage = 'Что-то пошло не так',
         loadMessage = 'Загрузка...';
     
-    const form = document.querySelectorAll('form');
+    const form = document.querySelectorAll('form'),
+        allInputs = document.querySelectorAll('input');
 
     const statusMessage = document.createElement('div');
         statusMessage.style.cssText = `font-size: 2.3rem; color: #F28C07`;
     
     for(let i = 0; i < form.length; i++){
         form[i].addEventListener('submit', (event) => {            
-            event.preventDefault();
+           event.preventDefault();
 
             if(form[i].closest('.popup-discount') || 
                form[i].closest('.director-form') ||
@@ -55,7 +56,12 @@ const sendForms = () => {
                 setTimeout(() => {
                     statusMessage.textContent = '';
                 }, 2000);
-            });             
+            });   
+            
+            allInputs.forEach((e) => {
+                e.value = '';
+            });
+
         });
     }
     
